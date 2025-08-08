@@ -1,0 +1,22 @@
+nameOverride: kube-prometheus-stack
+
+grafana:
+  enabled: false
+nodeExporter:
+  enabled: false
+
+prometheus:
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    hosts:
+      - prometheus.apps.127.0.0.1.nip.io
+  prometheusSpec:
+    serviceMonitorSelectorNilUsesHelmValues: false
+
+alertmanager:
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    hosts:
+      - alert-manager.apps.127.0.0.1.nip.io

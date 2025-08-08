@@ -1,0 +1,17 @@
+{{- if .Capabilities.APIVersions.Has "cert-manager.io/v1" }}
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: lab-issuer
+spec:
+  isCA: true
+  commonName: SMUDA Lab CA
+  secretName: {{ .Values.rootSecretName }}
+  privateKey:
+    algorithm: RSA
+    size: 4096
+  issuerRef:
+    name: lab-self-signed-issuer
+    kind: Issuer
+    group: cert-manager.io
+{{- end }}

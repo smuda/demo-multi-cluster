@@ -1,0 +1,29 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: cluster-1
+nodes:
+  - role: control-plane
+kubeadmConfigPatches:
+  - |-
+    kind: ClusterConfiguration
+    # configure controller-manager bind address
+    controllerManager:
+      extraArgs:
+        # configure controller metrics bind address
+        bind-address: 0.0.0.0
+    etcd:
+      local:
+        extraArgs:
+          # configure etcd metrics bind address
+          listen-metrics-urls: http://0.0.0.0:2381
+    # configure scheduler bind address
+    scheduler:
+      extraArgs:
+        bind-address: 0.0.0.0  # Disable localhost binding
+  - |-
+    kind: KubeProxyConfiguration
+    # configure proxy metrics bind address
+    metricsBindAddress: 0.0.0.0
+networking:
+  podSubnet: "10.245.0.0/16"
+  serviceSubnet: "10.97.0.0/16"

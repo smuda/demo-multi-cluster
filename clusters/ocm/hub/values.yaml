@@ -1,0 +1,23 @@
+argocd:
+  appProject: addons
+  common:
+    target_revision: main
+
+certmanager:
+  version: v1.18.2
+
+ingressNginx:
+  # https://github.com/kubernetes/ingress-nginx/blob/main/charts/ingress-nginx/Chart.yaml
+  version: 4.12.2
+
+metricsServer:
+  # https://artifacthub.io/packages/helm/metrics-server/metrics-server
+  version: 3.12.2
+
+prometheus:
+  # https://github.com/prometheus-community/helm-charts/releases
+  version: 71.2.0
+
+reloader:
+  # https://github.com/stakater/Reloader/releases
+  version: 2.1.3

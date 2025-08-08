@@ -1,0 +1,4 @@
+argocd:
+  namespace: argocd
+  common:
+    target_revision: main

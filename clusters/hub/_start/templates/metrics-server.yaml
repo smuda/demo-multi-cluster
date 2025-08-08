@@ -1,0 +1,32 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: hub-metrics-server
+  namespace: argocd
+spec:
+  destination:
+    namespace: addon-metrics-server
+    server: https://kubernetes.default.svc
+  project: addons
+  sources:
+    - repoURL: https://github.com/smuda/demo-multi-cluster.git
+      targetRevision: {{ .Values.argocd.common.target_revision }}
+      ref: values
+    - repoURL: https://kubernetes-sigs.github.io/metrics-server/
+      targetRevision: {{ .Values.metricsServer.version }}
+      chart: metrics-server
+      helm:
+        valueFiles:
+          - "$values/clusters/hub/metrics-server/values.yaml"
+          - "$values/clusters/hub/metrics-server/values-hub.yaml"
+        {{- with .Values.helmParameters }}
+        parameters:
+          {{- include "template.helmParameters" (dict "prefix" "" "data" .Values.helmParameters) | indent 8 }}
+        {{- end }}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

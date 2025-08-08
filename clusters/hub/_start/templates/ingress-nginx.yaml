@@ -1,0 +1,32 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: hub-ingress-nginx
+  namespace: argocd
+spec:
+  destination:
+    namespace: addon-ingress-nginx
+    server: https://kubernetes.default.svc
+  project: addons
+  sources:
+    - repoURL: https://github.com/smuda/demo-multi-cluster.git
+      targetRevision: {{ .Values.argocd.common.target_revision }}
+      ref: values
+    - repoURL: https://kubernetes.github.io/ingress-nginx
+      targetRevision: {{ .Values.ingressNginx.version }}
+      chart: ingress-nginx
+      helm:
+        valueFiles:
+          - "$values/clusters/hub/ingress-nginx/values.yaml"
+          - "$values/clusters/hub/ingress-nginx/values-hub.yaml"
+        {{- with .Values.helmParameters }}
+        parameters:
+          {{- include "template.helmParameters" (dict "prefix" "" "data" .Values.helmParameters) | indent 8 }}
+        {{- end }}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

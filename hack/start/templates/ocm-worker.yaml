@@ -1,0 +1,33 @@
+{{- if .Values.ocmWorker.use }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ocm-worker
+  namespace: argocd
+spec:
+  destination:
+    namespace: argocd
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    helm:
+      version: v3
+      releaseName: root
+      {{- with .Values.argocd.valueFiles }}
+      valueFiles:
+        {{- . | toYaml | nindent 8 }}
+      {{- end }}
+      parameters:
+        - name: argocd.common.target_revision
+          value: {{ .Values.targetRevision }}
+        {{- if .Values.helmParameters }}
+        {{- include "template.helmParameters" (dict "prefix" "" "data" .Values.helmParameters) | indent 8 }}
+        {{- end }}
+    path: clusters/ocm/worker
+    repoURL: https://github.com/smuda/demo-multi-cluster.git
+    targetRevision: {{ .Values.targetRevision }}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+{{- end }}

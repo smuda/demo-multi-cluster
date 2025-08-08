@@ -1,0 +1,57 @@
+argo-cd:
+  global:
+    networkPolicy:
+      create: true
+
+  dex:
+    enabled: false
+    metrics:
+      enabled: true
+      serviceMonitor:
+        enabled: true
+  controller:
+    env:
+      - name: ARGOCD_SYNC_WAVE_DELAY
+        value: "10"
+    metrics:
+      enabled: true
+      serviceMonitor:
+        enabled: true
+  redis:
+    metrics:
+      enabled: true
+      serviceMonitor:
+        enabled: true
+  repoServer:
+    metrics:
+      enabled: true
+      serviceMonitor:
+        enabled: true
+
+  server:
+    extraArgs:
+      - "--insecure"
+    config:
+      repositories: |
+        - type: helm
+          name: argo-cd
+          url: https://argoproj.github.io/argo-helm
+    certificate:
+      domain: argocd.app.127.0.0.1.nip.io
+      enabled: true
+      issuer:
+        kind: ClusterIssuer
+        name: lab-cluster-issuer
+    ingress:
+      enabled: true
+      tls: true
+      hostname: argocd.app.127.0.0.1.nip.io
+      ingressClassName: nginx
+    metrics:
+      enabled: true
+      serviceMonitor:
+        enabled: true
+  configs:
+    secret:
+      # This is really `password` bcrypt hashed
+      argocdServerAdminPassword: $2a$10$atlthaDW9TadP0OduJCBruNQLEcoYzOFfgjRU5cwUjf3dDjbj2qIu

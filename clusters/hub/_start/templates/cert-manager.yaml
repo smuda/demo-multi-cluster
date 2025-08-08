@@ -1,0 +1,39 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: hub-cert-manager
+  namespace: argocd
+spec:
+  destination:
+    namespace: addon-cert-manager
+    server: https://kubernetes.default.svc
+  project: addons
+  sources:
+    - repoURL: https://github.com/smuda/demo-multi-cluster.git
+      targetRevision: {{ .Values.argocd.common.target_revision }}
+      ref: values
+    - repoURL: quay.io/jetstack/charts
+      targetRevision: {{ .Values.certmanager.version }}
+      chart: cert-manager
+      helm:
+        valueFiles:
+          - "$values/clusters/hub/cert-manager/values.yaml"
+          - "$values/clusters/hub/cert-manager/values-hub.yaml"
+        {{- with .Values.helmParameters }}
+        parameters:
+          {{- include "template.helmParameters" (dict "prefix" "" "data" .Values.helmParameters) | indent 8 }}
+        {{- end }}
+    - repoURL: https://github.com/smuda/demo-multi-cluster.git
+      targetRevision: {{ .Values.argocd.common.target_revision }}
+      path: clusters/hub/cert-manager-config
+      helm:
+        valueFiles:
+          - "$values/clusters/hub/cert-manager-config/values.yaml"
+          - "$values/clusters/hub/cert-manager-config/values-hub.yaml"
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

@@ -1,0 +1,80 @@
+installCRDs: true
+deploymentAnnotations:
+  reloader.stakater.com/auto: "true"
+nameOverride: cert-manager
+extraArgs:
+  # Disable standard approver, use policy approver instead
+  #- "--controllers=*,-certificaterequests-approver"
+namespace: addon-cert-manager
+resources:
+ requests:
+   cpu: 100m
+   memory: 128Mi
+ limits:
+   memory: 128Mi
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+
+prometheus:
+  enabled: true
+  servicemonitor:
+    enabled: true
+
+### webhook ###
+webhook:
+  deploymentAnnotations:
+    reloader.stakater.com/auto: "true"
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+    readOnlyRootFilesystem: true
+    runAsNonRoot: true
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 96Mi
+    limits:
+      memory: 96Mi
+
+### cainjector ###
+cainjector:
+  deploymentAnnotations:
+    reloader.stakater.com/auto: "true"
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+    readOnlyRootFilesystem: true
+    runAsNonRoot: true
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      memory: 256Mi
+### startupapicheck ###
+startupapicheck:
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+    readOnlyRootFilesystem: true
+    runAsNonRoot: true
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      memory: 256Mi

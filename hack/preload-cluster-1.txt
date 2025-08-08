@@ -1,0 +1,14 @@
+ecr-public.aws.com/docker/library/redis:7.2.8-alpine
+quay.io/argoproj/argocd:v3.0.12
+quay.io/jetstack/cert-manager-cainjector:v1.18.2
+quay.io/jetstack/cert-manager-controller:v1.18.2
+quay.io/jetstack/cert-manager-webhook:v1.18.2
+quay.io/open-cluster-management/registration-operator:v1.0.0
+quay.io/open-cluster-management/registration:v1.0.0
+quay.io/open-cluster-management/work:v1.0.0
+quay.io/prometheus-operator/prometheus-config-reloader:v0.82.0
+quay.io/prometheus-operator/prometheus-operator:v0.82.0
+quay.io/prometheus/alertmanager:v0.28.1
+quay.io/prometheus/prometheus:v3.3.1
+registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.5.3
+registry.k8s.io/metrics-server/metrics-server:v0.7.2

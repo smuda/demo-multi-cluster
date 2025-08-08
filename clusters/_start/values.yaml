@@ -1,0 +1,11 @@
+argocd:
+  common:
+    target_revision: main
+  namespace: argocd
+  valueFiles: []
+
+applications:
+  common:
+    use: true
+  ocmHub:
+    use: true

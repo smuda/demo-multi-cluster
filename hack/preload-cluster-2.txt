@@ -1,0 +1,5 @@
+ecr-public.aws.com/docker/library/redis:7.2.8-alpine
+quay.io/argoproj/argocd:v3.0.12
+quay.io/open-cluster-management/registration-operator:v1.0.0
+quay.io/open-cluster-management/registration:v1.0.0
+quay.io/open-cluster-management/work:v1.0.0

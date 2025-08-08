@@ -1,0 +1,8 @@
+{{- if .Capabilities.APIVersions.Has "cert-manager.io/v1" }}
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: lab-self-signed-issuer
+spec:
+  selfSigned: {}
+{{- end }}

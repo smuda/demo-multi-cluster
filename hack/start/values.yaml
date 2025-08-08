@@ -1,0 +1,13 @@
+targetRevision: main
+
+ingress:
+  hostname: argocd.app.127.0.0.1.nip.io
+
+argocd:
+  valueFiles: []
+
+root:
+  use: false
+
+ocmWorker:
+  use: false

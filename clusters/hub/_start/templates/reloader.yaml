@@ -1,0 +1,32 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: hub-reloader
+  namespace: argocd
+spec:
+  destination:
+    namespace: addon-reloader
+    server: https://kubernetes.default.svc
+  project: addons
+  sources:
+    - repoURL: https://github.com/smuda/demo-multi-cluster.git
+      targetRevision: {{ .Values.argocd.common.target_revision }}
+      ref: values
+    - repoURL: https://stakater.github.io/stakater-charts
+      targetRevision: {{ .Values.reloader.version }}
+      chart: reloader
+      helm:
+        valueFiles:
+          - "$values/clusters/hub/reloader/values.yaml"
+          - "$values/clusters/hub/reloader/values-hub.yaml"
+        {{- with .Values.helmParameters }}
+        parameters:
+          {{- include "template.helmParameters" (dict "prefix" "" "data" .Values.helmParameters) | indent 8 }}
+        {{- end }}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

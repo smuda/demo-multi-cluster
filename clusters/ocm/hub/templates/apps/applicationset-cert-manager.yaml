@@ -1,0 +1,58 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: worker-clusters-cert-manager
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - clusterDecisionResource:
+        configMapRef: ocm-placement-generator
+        labelSelector:
+          matchLabels:
+            cluster.open-cluster-management.io/placement: worker-clusters
+        requeueAfterSeconds: 30
+  template:
+    metadata:
+      name: '{{"{{ .name }}-cert-manager"}}'
+      labels:
+        apps.open-cluster-management.io/pull-to-ocm-managed-cluster: 'true'
+      annotations:
+        argocd.argoproj.io/skip-reconcile: 'true'
+        apps.open-cluster-management.io/ocm-managed-cluster: '{{"{{ .name }}"}}'
+        apps.open-cluster-management.io/ocm-managed-cluster-app-namespace: argocd
+    spec:
+      destination:
+        namespace: addon-cert-manager
+        server: https://kubernetes.default.svc
+      project: {{ .Values.argocd.appProject }}
+      sources:
+        - repoURL: https://github.com/smuda/demo-multi-cluster.git
+          targetRevision: {{ .Values.argocd.common.target_revision }}
+          ref: values
+        - repoURL: quay.io/jetstack/charts
+          targetRevision: {{ .Values.certmanager.version }}
+          chart: cert-manager
+          helm:
+            valueFiles:
+              - "$values/clusters/hub/cert-manager/values.yaml"
+              - "$values/clusters/hub/cert-manager/values-{{"{{ .name }}"}}.yaml"
+            {{- with .Values.helmParameters }}
+            parameters:
+              {{- include "template.helmParameters" (dict "prefix" "" "data" .Values.helmParameters) | indent 8 }}
+            {{- end }}
+        - repoURL: https://github.com/smuda/demo-multi-cluster.git
+          targetRevision: {{ .Values.argocd.common.target_revision }}
+          path: clusters/hub/cert-manager-config
+          helm:
+            valueFiles:
+              - "$values/clusters/hub/cert-manager-config/values.yaml"
+              - "$values/clusters/hub/cert-manager-config/values-{{"{{ .name }}"}}.yaml"
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true

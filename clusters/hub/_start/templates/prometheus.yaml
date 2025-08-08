@@ -1,0 +1,32 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: hub-prometheus
+  namespace: argocd
+spec:
+  destination:
+    namespace: addon-prometheus
+    server: https://kubernetes.default.svc
+  project: addons
+  sources:
+    - repoURL: https://github.com/smuda/demo-multi-cluster.git
+      targetRevision: {{ .Values.argocd.common.target_revision }}
+      ref: values
+    - repoURL: https://prometheus-community.github.io/helm-charts
+      targetRevision: {{ .Values.prometheus.version }}
+      chart: kube-prometheus-stack
+      helm:
+        valueFiles:
+          - "$values/clusters/hub/prometheus/values.yaml"
+          - "$values/clusters/hub/prometheus/values-hub.yaml"
+        {{- with .Values.helmParameters }}
+        parameters:
+          {{- include "template.helmParameters" (dict "prefix" "" "data" .Values.helmParameters) | indent 8 }}
+        {{- end }}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

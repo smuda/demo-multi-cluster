@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: addons
+  namespace: {{ .Values.argocd.namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  clusterResourceWhitelist:
+    - group: '*'
+      kind: '*'
+  destinations:
+    - namespace: 'addon-*'
+      server: '*'
+    - namespace: 'kube-system'
+      server: '*'
+  sourceRepos:
+    - '*'
+  sourceNamespaces:
+    - {{ .Values.argocd.namespace }}
