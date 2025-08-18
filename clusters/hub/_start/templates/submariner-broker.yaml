@@ -1,0 +1,31 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: submariner-broker
+  namespace: argocd
+spec:
+  destination:
+    namespace: addon-submariner-broker
+    server: https://kubernetes.default.svc
+  project: addons
+  sources:
+    - repoURL: https://github.com/smuda/demo-multi-cluster.git
+      targetRevision: {{ .Values.argocd.common.target_revision }}
+      ref: values
+    - repoURL: https://submariner-io.github.io/submariner-charts/charts
+      targetRevision: {{ .Values.submarinerBroker.version }}
+      chart: submariner-k8s-broker
+      helm:
+        valueFiles:
+          - "$values/clusters/hub/submariner-broker/values.yaml"
+        {{- with .Values.helmParameters }}
+        parameters:
+          {{- include "template.helmParameters" (dict "prefix" "" "data" .Values.helmParameters) | indent 8 }}
+        {{- end }}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

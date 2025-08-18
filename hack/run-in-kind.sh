@@ -8,6 +8,7 @@ CLUSTER_NAME_PREFIX=cluster
 KUBECONFIG_PREFIX=~/.kube/${CLUSTER_NAME_PREFIX}
 PRE_LOAD_IMAGES_EXTRAS_FILE=${SCRIPT_DIR}/preload-extras.txt
 INGRESS=${INGRESS:-ingressNginx}
+SUBMARINER_BROKER_NS=addon-submariner-broker
 
 verifyBinariesExist() {
   echo "Verify binaries exist"
@@ -186,6 +187,27 @@ echo ""
 echo "Init OCM on cluster hub"
 clusteradm init --wait
 OCM_JOIN_CMD=$(clusteradm get token | grep clusteradm)
+
+echo ""
+echo "Wait for submariner-k8s-broker to startup"
+kubectl \
+  wait namespace "${SUBMARINER_BROKER_NS}" \
+  --for condition=Created=True \
+  --timeout=180s \
+  || exit 1
+
+sleep 5
+
+DEPLOYMENTS=$(kubectl \
+  -n "${SUBMARINER_BROKER_NS}" \
+  get deploy -o json | jq -r '.items[].metadata.name' | tr '\n' ' ')
+
+kubectl \
+  -n "${SUBMARINER_BROKER_NS}" \
+  wait deployment ${DEPLOYMENTS} \
+  --for condition=Available=True \
+  --timeout=180s \
+  || exit 1
 
 ##### CLUSTER 1
 echo ""

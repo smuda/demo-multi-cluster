@@ -1,0 +1,51 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: worker-clusters-submariner-operator
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - clusterDecisionResource:
+        configMapRef: ocm-placement-generator
+        labelSelector:
+          matchLabels:
+            cluster.open-cluster-management.io/placement: worker-clusters
+        requeueAfterSeconds: 30
+  template:
+    metadata:
+      name: '{{"{{ .name }}-submariner-operator"}}'
+      labels:
+        apps.open-cluster-management.io/pull-to-ocm-managed-cluster: 'true'
+      annotations:
+        argocd.argoproj.io/skip-reconcile: 'true'
+        apps.open-cluster-management.io/ocm-managed-cluster: '{{"{{ .name }}"}}'
+        apps.open-cluster-management.io/ocm-managed-cluster-app-namespace: argocd
+    spec:
+      destination:
+        namespace: addon-submariner-operator
+        server: https://kubernetes.default.svc
+      project: {{ .Values.argocd.appProject }}
+      sources:
+        - repoURL: https://github.com/smuda/demo-multi-cluster.git
+          targetRevision: {{ .Values.argocd.common.target_revision }}
+          ref: values
+        - repoURL: https://submariner-io.github.io/submariner-charts/charts
+          targetRevision: {{ .Values.reloader.version }}
+          chart: submariner-operator
+          helm:
+            valueFiles:
+              - "$values/clusters/hub/submariner-operator/values.yaml"
+              - "$values/clusters/hub/submariner-operator/values-{{"{{ .name }}"}}.yaml"
+            {{- with .Values.helmParameters }}
+            parameters:
+              {{- include "template.helmParameters" (dict "prefix" "" "data" .Values.helmParameters) | indent 8 }}
+            {{- end }}
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true

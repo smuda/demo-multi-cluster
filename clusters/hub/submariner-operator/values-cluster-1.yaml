@@ -1,0 +1,4 @@
+submariner:
+  clusterCidr: "10.245.0.0/16"
+  clusterId: "cluster-1"
+  serviceCidr: "10.97.0.0/16"

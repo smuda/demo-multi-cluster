@@ -20,3 +20,7 @@ prometheus:
 reloader:
   # https://github.com/stakater/Reloader/releases
   version: 2.1.3
+
+submarinerBroker:
+  # https://submariner.io/submariner-charts/charts/index.yaml
+  version: 0.21.0
