@@ -1,9 +1,7 @@
 broker:
-  ca: "${SUBMARINER_BROKER_CA}"
   globalnet: true
   namespace: "addon-submariner-broker"
   server: "cluster-1-control-plane:6443"
-  token: "${SUBMARINER_BROKER_TOKEN}"
 
 ipsec:
   psk: "8X" # Random value :-)
@@ -21,3 +19,7 @@ submariner:
   globalCidr: "242.42.0.0/16"
   natEnabled: "false"
   serviceDiscovery: true
+
+operator:
+  image:
+    pullPolicy: "IfNotPresent"

@@ -9,6 +9,7 @@ KUBECONFIG_PREFIX=~/.kube/${CLUSTER_NAME_PREFIX}
 PRE_LOAD_IMAGES_EXTRAS_FILE=${SCRIPT_DIR}/preload-extras.txt
 INGRESS=${INGRESS:-ingressNginx}
 SUBMARINER_BROKER_NS=addon-submariner-broker
+SUBMARINER_OPERATOR_NS=submariner-operator
 
 verifyBinariesExist() {
   echo "Verify binaries exist"
@@ -265,6 +266,8 @@ helm --kubeconfig "${KUBECONFIG}" \
   || exit 1
 
 ##### Submariner
+helm repo add submariner-latest https://submariner-io.github.io/submariner-charts/charts
+SUBMARINER_BROKER_TOKEN_SECRET=submariner-broker-submariner-k8s-broker-client-token
 echo ""
 echo "Wait for submariner-k8s-broker to startup"
 while : ; do
@@ -272,3 +275,58 @@ while : ; do
     get ns ${SUBMARINER_BROKER_NS} && break
   sleep 5
 done
+
+while : ; do
+  kubectl --kubeconfig "${KUBECONFIG_PREFIX}-hub" \
+    get secret -n ${SUBMARINER_BROKER_NS} ${SUBMARINER_BROKER_TOKEN_SECRET} && break
+  sleep 5
+done
+
+echo ""
+echo "Fetch stuff from hub to be able to join worker clusters"
+export SUBMARINER_BROKER_CA=$(kubectl --kubeconfig "${KUBECONFIG_PREFIX}-hub" \
+    -n "${SUBMARINER_BROKER_NS}" \
+    get secret ${SUBMARINER_BROKER_TOKEN_SECRET} \
+    -o jsonpath="{.data['ca\.crt']}")
+export SUBMARINER_BROKER_TOKEN=$(kubectl --kubeconfig "${KUBECONFIG_PREFIX}-hub" \
+    -n "${SUBMARINER_BROKER_NS}" \
+    get secret ${SUBMARINER_BROKER_TOKEN_SECRET} \
+    -o jsonpath="{.data.token}" \
+       | base64 --decode)
+export SUBMARINER_BROKER_URL=$(kubectl --kubeconfig "${KUBECONFIG_PREFIX}-hub" \
+    -n default get endpoints kubernetes \
+    -o jsonpath="{.subsets[0].addresses[0].ip}:{.subsets[0].ports[?(@.name=='https')].port}")
+
+echo "SUBMARINER_BROKER_CA=${SUBMARINER_BROKER_CA}"
+echo "SUBMARINER_BROKER_TOKEN=${SUBMARINER_BROKER_TOKEN}"
+echo "SUBMARINER_BROKER_URL=${SUBMARINER_BROKER_URL}"
+
+##### Submariner cluster-1
+echo ""
+CLUSTER_ID="1"
+echo "Join cluster ${CLUSTER_ID} to submariner"
+helm --kubeconfig "${KUBECONFIG_PREFIX}-${CLUSTER_ID}" \
+  install submariner-operator submariner-latest/submariner-operator \
+    -f "${SCRIPT_DIR}/../clusters/hub/submariner-operator/values.yaml" \
+    -f "${SCRIPT_DIR}/../clusters/hub/submariner-operator/values-cluster-${CLUSTER_ID}.yaml" \
+        --create-namespace \
+        --namespace "${SUBMARINER_OPERATOR_NS}" \
+        --set broker.server="${SUBMARINER_BROKER_URL}" \
+        --set broker.token="${SUBMARINER_BROKER_TOKEN}" \
+        --set broker.ca="${SUBMARINER_BROKER_CA}" \
+  || exit 1
+
+##### Submariner cluster-2
+echo ""
+CLUSTER_ID="2"
+echo "Join cluster ${CLUSTER_ID} to submariner"
+helm --kubeconfig "${KUBECONFIG_PREFIX}-${CLUSTER_ID}" \
+  install submariner-operator submariner-latest/submariner-operator \
+    -f "${SCRIPT_DIR}/../clusters/hub/submariner-operator/values.yaml" \
+    -f "${SCRIPT_DIR}/../clusters/hub/submariner-operator/values-cluster-${CLUSTER_ID}.yaml" \
+        --create-namespace \
+        --namespace "${SUBMARINER_OPERATOR_NS}" \
+        --set broker.server="${SUBMARINER_BROKER_URL}" \
+        --set broker.token="${SUBMARINER_BROKER_TOKEN}" \
+        --set broker.ca="${SUBMARINER_BROKER_CA}" \
+  || exit 1
